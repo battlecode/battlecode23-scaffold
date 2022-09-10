@@ -1,0 +1,378 @@
+// Gradle's plugins allow it to automatically generate build scripts
+// for different types of code. Here we apply the Java plugin, which provides
+// all the tools needed to build player code!
+apply plugin: 'java'
+
+// The Scala plugin expands upon the Java plugin, allowing us to compile Scala source files.
+apply plugin: 'scala'
+
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+
+
+ext.versions = [
+    battlecode: new File(projectDir, "version.txt").text.trim()
+    //scala: '2.11.7'
+]
+
+
+// Battlecode updates a lot.
+// We should make sure to check for new dependencies frequently.
+configurations.all {
+    resolutionStrategy.cacheDynamicVersionsFor 60, 'seconds'
+}
+
+
+// Tell gradle that we want Java 8.
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+// We override Gradle's defaults for project directory layout.
+sourceSets {
+    main {
+        java.srcDirs = [ project.property('source') ]
+        scala.srcDirs = [ project.property('source') ]
+
+        java.outputDir = file("$buildDir/classes")
+        scala.outputDir = file("$buildDir/classes")
+    }
+
+    test {
+        java.srcDirs = ["test"]
+        scala.srcDirs = ["test"]
+
+        java.outputDir = file("$buildDir/tests")
+        scala.outputDir = file("$buildDir/tests")
+    }
+}
+
+//Setting default output directories for compiled classes and generated replay files
+//For other default properties, see gradle.properties
+if (!project.hasProperty("classLocationA")) {
+    ext.classLocationA = sourceSets.main.output.classesDirs.getAsPath()
+}
+if (!project.hasProperty("classLocationB")) {
+    ext.classLocationB = sourceSets.main.output.classesDirs.getAsPath()
+}
+if (!project.hasProperty("replay")) {
+    ext.replay = 'matches/' + project.property('teamA') + '-vs-' + project.property('teamB') + '-on-' + project.property('maps') + '.bc22'
+}
+
+// Mark the client as a special dependency, so that we can handle it separately.
+configurations {
+    client
+    client32
+}
+
+// Download a different version of the client depending on the local OS.
+def os = System.getProperty("os.name").toLowerCase()
+def clientName = os.startsWith('windows') ? 'battlecode22-client-win' :
+                 os.startsWith('mac') ? 'battlecode22-client-mac' :
+                 'battlecode22-client-linux'
+
+// The dependencies of this project.
+dependencies {
+    // The Battlecode engine.
+    implementation group: 'org.battlecode', name: 'battlecode22', version: versions.battlecode
+
+    // The Battlecode client.
+    client group: 'org.battlecode', name: clientName, version: versions.battlecode
+
+    // Scala!
+    implementation 'org.scala-lang:scala-library:2.11.7'
+    testImplementation 'org.scalatest:scalatest_2.11:3.0.0'
+    testImplementation 'junit:junit:4.12'
+}
+
+// Eclipse specific setup to enable docs and sources, and configure layout.
+eclipse {
+    classpath {
+        downloadJavadoc = true
+        downloadSources = true
+
+        defaultOutputDir = new File(project.buildDir, 'classes-eclipse')
+    }
+}
+
+// IntelliJ settings.
+idea {
+    module {
+        jdkName = 1.8
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
+
+
+// Here we register battlecode's maven repository, so the gradle knows where to download the engine and client from
+repositories {
+    mavenCentral()
+    maven {
+        url = "https://us-east1-maven.pkg.dev/battlecode18/battlecode22-engine"
+    }
+    // Use the JCenter repo to resolve Scala dependencies.
+    jcenter()
+}
+
+
+
+static String getVersionFromWeb() {
+    
+    String[] urls = ["https://play.battlecode.org/versions/2022/version.txt"]
+    String version = null
+
+    for (String url in urls) {
+        try {
+            version = new URL(url).text.trim()
+            break
+        } catch (Exception ex) {}
+    }
+
+    if (version == null) {
+        throw new Exception("Couldn't find new version number. Connect to the internet or update your scaffold")
+    }
+
+    return version
+}
+
+task version {
+    group 'battlecode'
+    doLast{
+        println("\nVersion: " + versions.battlecode + "\n")
+    }
+}
+
+task checkForUpdate() {
+    group 'battlecode'
+    doLast {
+        version = getVersionFromWeb()
+
+        if (versions.battlecode != version) print("\n\n\n\n\n\n\tNEW VERSION" + version + " AVAILABLE\n\trun ./gradlew update to download \n\n\n\n")
+    }
+}
+
+// This task pulls the newest version number from the website
+// The gradle will then download that version of the engine and client
+task update {
+    group 'battlecode'
+    doLast {
+        //overwrites stored version number
+        version = getVersionFromWeb()
+        new File(projectDir, "version.txt").text = version
+
+        //overwrites cached version number
+        versions.battlecode = version
+        println("Updated to " + version)
+    }
+}
+
+// Here we define a task. Tasks like this one, 'unpackClient', can be
+// executed in the terminal with `gradlew unpackClient`
+task unpackClient(type: Copy, dependsOn: configurations.client) {
+    description 'Downloads the client.'
+    group 'battlecode'
+
+    dependsOn configurations.client
+    dependsOn checkForUpdate
+    from {
+        configurations.client.collect {
+            zipTree(it)
+        }
+    }
+    into 'client/'
+}
+
+build.group = 'battlecode'
+build.dependsOn('unpackClient')
+
+// Another task. This one accepts optional parameters, or "properties",
+// corresponding to the bots used by the two teams, the map(s) used in this
+// game, the location of the classes for the two teams, and the destination of the replay file.
+// These properties can be set in the command line with:
+// On Windows cmd:
+//   `gradlew -PteamA=<team A bot> -PteamB=<team B bot> -Pmaps=<comma
+//    separated list of maps> -Preplay=<destination> -PclassLocationA=<where the packages for team A are stored>`
+//    -PclassLocationB=<where the packages for team B are stored>`
+// On Powershell, OS X, and Linux:
+//   `./gradlew -PteamA=<team A bot> -PteamB=<team B bot> -Pmaps=<comma
+//   separated list of maps>`
+
+task run(type: JavaExec, dependsOn: 'build') {
+    description 'Runs a match without starting the client.'
+    group 'battlecode'
+
+    main = 'battlecode.server.Main'
+    classpath = sourceSets.main.runtimeClasspath
+    args = ['-c=-']
+    jvmArgs = [
+        '-Dbc.server.mode=headless',
+        '-Dbc.server.map-path=maps',
+        '-Dbc.server.robot-player-to-system-out='+project.property('outputVerbose'),
+        '-Dbc.server.debug=true',
+        '-Dbc.engine.debug-methods=true',
+        '-Dbc.engine.enable-profiler='+project.property('profilerEnabled'),
+        '-Dbc.game.team-a='+project.property('teamA'),
+        '-Dbc.game.team-b='+project.property('teamB'),
+        '-Dbc.game.team-a.url='+project.property('classLocationA'),
+        '-Dbc.game.team-b.url='+project.property('classLocationB'),
+        '-Dbc.game.maps='+project.property('maps'),
+        '-Dbc.server.save-file=' +project.property('replay')
+    ]
+}
+
+task runFromSaturn(type: JavaExec, dependsOn: 'build') {
+    description 'Runs a match without starting the client.'
+    group 'battlecode'
+
+    main = 'battlecode.server.Main'
+    classpath = sourceSets.main.runtimeClasspath
+    args = ['-c=-']
+    jvmArgs = [
+        '-Dbc.server.mode=headless',
+        '-Dbc.server.map-path=maps',
+        '-Dbc.server.robot-player-to-system-out=false',
+        '-Dbc.server.debug=false',
+        '-Dbc.engine.debug-methods=true',
+        '-Dbc.engine.show-indicators=false',
+        '-Dbc.engine.enable-profiler='+project.property('profilerEnabled'),
+        '-Dbc.game.team-a='+project.property('teamA'),
+        '-Dbc.game.team-b='+project.property('teamB'),
+        '-Dbc.game.team-a.url='+project.property('classLocationA'),
+        '-Dbc.game.team-b.url='+project.property('classLocationB'),
+        '-Dbc.game.team-a.package='+project.property('packageNameA'),
+        '-Dbc.game.team-b.package='+project.property('packageNameB'),
+        '-Dbc.game.maps='+project.property('maps'),
+        '-Dbc.server.save-file=' +project.property('replay')
+    ]
+}
+
+task runFromClient(type: JavaExec, dependsOn: 'build') {
+    main = 'battlecode.server.Main'
+    classpath = project.sourceSets.main.runtimeClasspath
+    args = ['-c=-']
+    jvmArgs = [
+            '-Dbc.server.wait-for-client=true',
+            '-Dbc.server.mode=headless',
+            '-Dbc.server.map-path=maps',
+            '-Dbc.server.debug=false',
+            '-Dbc.server.robot-player-to-system-out='+project.property('outputVerbose'),
+            '-Dbc.engine.debug-methods=true',
+            '-Dbc.engine.enable-profiler='+project.property('profilerEnabled'),
+            '-Dbc.game.team-a='+project.property('teamA'),
+            '-Dbc.game.team-b='+project.property('teamB'),
+            '-Dbc.game.team-a.url='+project.property('classLocationA'),
+            '-Dbc.game.team-b.url='+project.property('classLocationB'),
+            '-Dbc.game.maps='+project.property('maps'),
+            '-Dbc.server.save-file=' + project.property('replay')
+    ]
+}
+task runDebug(type: JavaExec, dependsOn: 'build') {
+    group 'battlecode'
+    main = 'battlecode.server.Main'
+    classpath = project.sourceSets.main.runtimeClasspath
+    args = ['-c=-']
+    jvmArgs = [
+            '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005',
+            '-Dbc.server.mode=headless',
+            '-Dbc.server.map-path=maps',
+            '-Dbc.server.debug=false',
+            '-Dbc.server.robot-player-to-system-out=true',
+            '-Dbc.engine.debug-methods=true',
+            '-Dbc.engine.enable-profiler='+project.property('profilerEnabled'),
+            '-Dbc.game.team-a='+project.property('teamA'),
+            '-Dbc.game.team-b='+project.property('teamB'),
+            '-Dbc.game.team-a.url='+project.property('classLocationA'),
+            '-Dbc.game.team-b.url='+project.property('classLocationB'),
+            '-Dbc.game.maps='+project.property('maps'),
+            '-Dbc.server.save-file=' + project.property('replay')
+    ]
+}
+
+// This task prints out all available players, in the format that the `run`
+// task expects them to be given as.
+task listPlayers {
+    description 'Lists all available players.'
+    group 'battlecode'
+
+    doLast {
+        sourceSets.main.allSource.each {
+            println it.name
+            if (it.getName().equals('RobotPlayer.java')
+                || it.getName().equals('RobotPlayer.scala')
+                ) {
+                URI base = new File(project.projectDir, 'src').toURI()
+                URI full = it.toURI()
+                String path = base.relativize(full).toString()
+                println 'PLAYER: '+path.substring(0, path.lastIndexOf('/')).replaceAll('/', '.')
+            }
+        }
+    }
+}
+
+// This task prints out all available maps, in the format that the `run` task
+// expects them to be given as.
+task listMaps {
+    description 'Lists all available maps.'
+    group 'battlecode'
+
+    doLast {
+        sourceSets.main.compileClasspath.each {
+            if (it.toString().contains('battlecode22-2022')) {
+                FileCollection fc = zipTree(it)
+                fc += fileTree(new File(project.projectDir, 'maps'))
+                fc.each {
+                    String fn = it.getName()
+                    if (fn.endsWith('.map22')) {
+                        println 'MAP: '+fn.substring(0, fn.indexOf('.map22'))
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+// Some client commands for 32 bit architectures
+def arch64 = false
+def arch32 = false
+if (System.getProperty("os.arch").matches("^(x8664|amd64|ia32e|em64t|x64)\$")) arch64 = true
+if (System.getProperty("os.arch").matches("^(x8632|x86|i[3-6]86|ia32|x32)\$")) arch32 = true
+
+
+if (arch32) {
+    def client32Name = os.startsWith('windows') ? 'battlecode22-client-win-32' :
+            os.startsWith('mac') ? 'UNSUPPORTED' :
+                    'battlecode22-client-linux-32'
+
+    if (clientName.equals('UNSUPPORTED')) {
+        println 'Sorry, the Battlecode client does not support 32-bit architectures for OS X.'
+        project.unpackClient32.onlyIf { false }
+    }
+
+    dependencies {
+        client32 group: 'org.battlecode', name: client32Name, version: versions.battlecode
+    }
+}
+
+task unpackClient32(type: Copy, dependsOn: configurations.client32) {
+    description 'Downloads the 32-bit client.'
+    group 'battlecode'
+
+    dependsOn configurations.client32
+
+    from {
+        configurations.client32.collect {
+            zipTree(it)
+        }
+    }
+    into 'client32/'
+}
+
+task buildMap(type: JavaExec, dependsOn: 'build') {
+    group 'battlecode'
+    main = 'maps.' + project.property('buildMap')
+    classpath = project.sourceSets.main.runtimeClasspath
+}
+
+unpackClient32.onlyIf { arch32 }
+build.dependsOn('unpackClient32')
