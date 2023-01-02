@@ -157,15 +157,15 @@ configurations {
 }
 
 def os = System.getProperty("os.name").toLowerCase()
-def clientName = os.startsWith('windows') ? 'battlecode22-client-win' :
-                 os.startsWith('mac') ? 'battlecode22-client-mac' :
-                 'battlecode22-client-linux'
+def clientName = os.startsWith('windows') ? 'battlecode23-client-win' :
+                 os.startsWith('mac') ? 'battlecode23-client-mac' :
+                 'battlecode23-client-linux'
 
 dependencies {
   testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 
   // The Battlecode engine.
-  implementation group: 'org.battlecode', name: 'battlecode22', version: versions.battlecode
+  implementation group: 'org.battlecode', name: 'battlecode23', version: versions.battlecode
 
   // The Battlecode client.
   client group: 'org.battlecode', name: clientName, version: versions.battlecode
@@ -182,9 +182,9 @@ def arch64 = System.getProperty("os.arch").matches("^(x86_64|amd64|ia32e|em64t|x
 def arch32 = System.getProperty("os.arch").matches("^(x86_32|x86|i[3-6]86|ia32|x32)\$")
 
 if (arch32) {
-  def client32Name = os.startsWith('windows') ? 'battlecode22-client-win-32' :
+  def client32Name = os.startsWith('windows') ? 'battlecode23-client-win-32' :
                      os.startsWith('mac') ? 'UNSUPPORTED' :
-                     'battlecode22-client-linux-32'
+                     'battlecode23-client-linux-32'
   if (client32Name.equals('UNSUPPORTED')) {
     logger.error('Sorry, the Battlecode client does not support 32-bit architectures for OS X.')
   }
@@ -250,7 +250,7 @@ task verify(type: JavaExec) {
 //////// Running ////////
 
 def defaultClassLocation = sourceSets.main.output.classesDirs.getAsPath()
-def defaultReplay = 'matches/' + project.property('teamA') + '-vs-' + project.property('teamB') + '-on-' + project.property('maps') + '.bc22'
+def defaultReplay = 'matches/' + project.property('teamA') + '-vs-' + project.property('teamB') + '-on-' + project.property('maps') + '.bc23'
 
 task run(type: JavaExec) {
   description 'Runs a match without starting the client.'
@@ -317,13 +317,13 @@ task listMaps {
   doLast {
     sourceSets.main.compileClasspath.each {
       logger.debug(it.name)
-      if (it.toString().contains('battlecode22-')) {
+      if (it.toString().contains('battlecode23-')) {
         FileCollection fc = zipTree(it)
         fc += fileTree(new File(project.projectDir, 'maps'))
         fc.each {
           String fn = it.getName()
-          if (fn.endsWith('.map22')) {
-            logger.quiet(fn.substring(0, fn.indexOf('.map22')))
+          if (fn.endsWith('.map23')) {
+            logger.quiet(fn.substring(0, fn.indexOf('.map23')))
           }
         }
       }
