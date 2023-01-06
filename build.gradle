@@ -280,16 +280,6 @@ task run(type: JavaExec) {
   ]
 }
 
-test {
-  debugOptions {
-    enabled = true
-    host = 'localhost'
-    port = 5005
-    server = true
-    suspend = true
-  }
-}
-
 
 //////// Informational ////////
 
