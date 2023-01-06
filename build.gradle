@@ -65,9 +65,9 @@ static String getVersionFromWeb(boolean onSaturn) {
     try {
       String episodeInfo = new URL(url).text.trim()
       if (onSaturn) {
-        version = new groovy.json.JsonSlurper().parseText(episodeInfo).private_release_version
+        version = new groovy.json.JsonSlurper().parseText(episodeInfo).release_version_saturn
       } else {
-        version = new groovy.json.JsonSlurper().parseText(episodeInfo).public_release_version
+        version = new groovy.json.JsonSlurper().parseText(episodeInfo).release_version_public
       }
     } catch (Exception ex) {
       System.out.println("Could not obtain version from " + url)
