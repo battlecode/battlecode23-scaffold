@@ -11,16 +11,20 @@ targetCompatibility = 1.8
 sourceSets {
   main {
     java.srcDirs = ["src"]
+    java.includes = ["**/*.java"]
     java.destinationDirectory.set(file("$buildDir/classes"))
 
     scala.srcDirs = ["src"]
+    scala.includes = ["**/*.scala"]
     scala.destinationDirectory.set(file("$buildDir/classes"))
   }
   test {
     java.srcDirs = ["test"]
+    java.includes = ["**/*.java"]
     java.destinationDirectory.set(file("$buildDir/tests"))
 
     scala.srcDirs = ["test"]
+    scala.includes = ["**/*.scala"]
     scala.destinationDirectory.set(file("$buildDir/tests"))
   }
 }
@@ -319,4 +323,16 @@ task listMaps {
       }
     }
   }
+}
+
+
+//////// Submitting ////////
+
+task zipForSubmit(type: Zip) {
+  description 'Produce a zip file for submission.'
+  group 'battlecode'
+
+  archiveFileName = 'submission.zip'
+  destinationDirectory = project.projectDir
+  from sourceSets.main.allSource
 }
