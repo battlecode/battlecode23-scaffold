@@ -1,6 +1,6 @@
-# Battlecode 2022 Scaffold
+# Battlecode 2023 Scaffold
 
-This is the Battlecode 2022 scaffold, containing an `examplefuncsplayer`. Read https://play.battlecode.org/getting-started!
+This is the Battlecode 2023 scaffold, containing an `examplefuncsplayer`. Read https://play.battlecode.org/getting-started!
 
 ### Project Structure
 
@@ -25,11 +25,20 @@ This is the Battlecode 2022 scaffold, containing an `examplefuncsplayer`. Read h
 - `gradle/`
     Contains files used by the Gradle wrapper scripts. Can be safely ignored.
 
+### How to get started
+
+You are free to directly edit `examplefuncsplayer`.
+However, we recommend you make a new bot by copying `examplefuncsplayer` to a new package under the `src` folder.
 
 ### Useful Commands
 
+- `./gradlew build`
+    Compiles your player
 - `./gradlew run`
     Runs a game with the settings in gradle.properties
 - `./gradlew update`
-    Update to the newest version! Run every so often
-
+    Update configurations for the latest version -- run this often
+- `./gradlew zipForUpdate`
+    Create a submittable zip file
+- `./gradlew tasks`
+    See what else you can do!
