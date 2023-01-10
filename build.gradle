@@ -184,11 +184,15 @@ dependencies {
 
 def arch64 = System.getProperty("os.arch").matches("^(x86_64|amd64|ia32e|em64t|x64)\$")
 def arch32 = System.getProperty("os.arch").matches("^(x86_32|x86|i[3-6]86|ia32|x32)\$")
+def client32Name = (
+  arch32
+  ? os.startsWith('windows') ? 'battlecode23-client-win-32' :
+    os.startsWith('mac')     ? 'UNSUPPORTED' :
+                               'battlecode23-client-linux-32'
+  : 'UNSUPPORTED'
+)
 
 if (arch32) {
-  def client32Name = os.startsWith('windows') ? 'battlecode23-client-win-32' :
-                     os.startsWith('mac') ? 'UNSUPPORTED' :
-                     'battlecode23-client-linux-32'
   if (client32Name.equals('UNSUPPORTED')) {
     logger.error('Sorry, the Battlecode client does not support 32-bit architectures for OS X.')
   }
