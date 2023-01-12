@@ -38,7 +38,7 @@ However, we recommend you make a new bot by copying `examplefuncsplayer` to a ne
     Runs a game with the settings in gradle.properties
 - `./gradlew update`
     Update configurations for the latest version -- run this often
-- `./gradlew zipForUpdate`
+- `./gradlew zipForSubmit`
     Create a submittable zip file
 - `./gradlew tasks`
     See what else you can do!
