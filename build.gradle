@@ -285,7 +285,7 @@ task run(type: JavaExec) {
     '-Dbc.game.team-b.package=' + (project.findProperty('packageNameB') ?: project.property('teamB')),
     '-Dbc.game.maps=' + project.property('maps'),
     '-Dbc.server.validate-maps=' + project.property('validateMaps'),
-    '-Dbc.server.switch-teams=' + project.property('switchTeams'),
+    '-Dbc.server.alternate-order=' + project.property('alternateOrder'),
     '-Dbc.server.save-file=' + (project.findProperty('replay') ?: defaultReplay),
   ]
 }
