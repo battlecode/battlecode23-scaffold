@@ -70,7 +70,7 @@ public class CarrierStrategy {
 
     static void scanHQ(RobotController rc) throws GameActionException {
         RobotInfo[] robots = rc.senseNearbyRobots();
-        int j;
+        int j = 0;
         for(int i = 0; i<robots.length; i++) {
             if (robots[i].getTeam() == rc.getTeam() && robots[i].getType() == RobotType.HEADQUARTERS) {
                 hqLoc = robots[i].getLocation();
@@ -89,7 +89,7 @@ public class CarrierStrategy {
                 hqLoc = robot.getLocation();
                 break;
             }
-        }**/ /**IMPROVEMENT I MADE: WILL CHOSE THE NEAREST HQ. THIS COULD BE COMPUTATIONALLY EXPENSIVE BECAUSE THERE ARE A LOT OF ROBOTS, SO MAYBE GO BACK TO ORIGINAL AT SOME POINT**/
+        }**/ /**IMPROVEMENT SEAN MADE: WILL CHOSE THE NEAREST HQ. THIS COULD BE COMPUTATIONALLY EXPENSIVE BECAUSE THERE ARE A LOT OF ROBOTS, SO MAYBE GO BACK TO ORIGINAL AT SOME POINT**/
     }
 
     static void scanWells(RobotController rc) throws GameActionException {
