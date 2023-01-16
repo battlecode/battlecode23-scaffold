@@ -16,6 +16,7 @@ import java.util.Set;
  */
 public strictfp class RobotPlayer {
 
+    // Sean is a cutie.
     /**
      * We will use this variable to count the number of turns this robot has been alive.
      * You can use static variables like this to save any information you want. Keep in mind that even though
