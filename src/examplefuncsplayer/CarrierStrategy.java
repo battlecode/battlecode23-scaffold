@@ -98,7 +98,7 @@ public class CarrierStrategy {
             wellLoc = wells[0].getMapLocation();
             for(int i = 1; i < wells.length; i++) {
                 if(rc.getLocation().distanceSquaredTo(wellLoc) > rc.getLocation().distanceSquaredTo(wells[i].getMapLocation())) { //*Note! getMapLocation is for wells, getLocation is for robots*//
-                    wellLoc = wells[i].getMapLocation(); /**IMPROVEMENT I MADE: WILL CHOSE THE NEAREST WELL**/
+                    wellLoc = wells[i].getMapLocation(); /**IMPROVEMENT SEAN MADE: WILL CHOSE THE NEAREST WELL**/
                 }
             }
         }
@@ -119,6 +119,20 @@ public class CarrierStrategy {
 
     static void scanIslands(RobotController rc) throws GameActionException {
         int[] ids = rc.senseNearbyIslands();
+        int j=0;
+        for(int i = 0; i<ids.length; i++) {
+            if (rc.senseTeamOccupyingIsland(ids[i]) == Team.NEUTRAL) {
+                islandLoc = rc.senseNearbyIslandLocations(ids[i])[0];
+                j = i;
+                break; /**Should hopefully find a island. If there's more than one, the next part will start from the index it left off at and see if it can find a closer one**/
+            }
+        }
+        for(int k = j; k<ids.length; k++) {
+            if (rc.senseTeamOccupyingIsland(ids[k]) == Team.NEUTRAL && rc.getLocation().distanceSquaredTo(islandLoc) > rc.getLocation().distanceSquaredTo(rc.senseNearbyIslandLocations(ids[k])[0])) {
+                islandLoc = rc.senseNearbyIslandLocations(ids[k])[0];
+            } /**This keeps going to see if any of the other islands are closer**/
+        }/**IMPROVEMENT SEAN MADE: WILL CHOSE THE NEAREST ISLAND**/
+        /**int[] ids = rc.senseNearbyIslands();
         for(int id : ids) {
             if(rc.senseTeamOccupyingIsland(id) == Team.NEUTRAL) {
                 MapLocation[] locs = rc.senseNearbyIslandLocations(id);
@@ -128,6 +142,6 @@ public class CarrierStrategy {
                 }
             }
             Communication.updateIslandInfo(rc, id);
-        }
+        }**/
     }
 }
