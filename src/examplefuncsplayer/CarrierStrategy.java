@@ -121,6 +121,7 @@ public class CarrierStrategy {
         int[] ids = rc.senseNearbyIslands();
         int j=0;
         for(int i = 0; i<ids.length; i++) {
+            Communication.updateIslandInfo(rc, ids[i]);
             if (rc.senseTeamOccupyingIsland(ids[i]) == Team.NEUTRAL) {
                 islandLoc = rc.senseNearbyIslandLocations(ids[i])[0];
                 j = i;
@@ -128,6 +129,7 @@ public class CarrierStrategy {
             }
         }
         for(int k = j; k<ids.length; k++) {
+            Communication.updateIslandInfo(rc, ids[k]);
             if (rc.senseTeamOccupyingIsland(ids[k]) == Team.NEUTRAL && rc.getLocation().distanceSquaredTo(islandLoc) > rc.getLocation().distanceSquaredTo(rc.senseNearbyIslandLocations(ids[k])[0])) {
                 islandLoc = rc.senseNearbyIslandLocations(ids[k])[0];
             } /**This keeps going to see if any of the other islands are closer**/

@@ -67,7 +67,6 @@ public class LauncherStrategy {
                 while (true) {
                     Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
                     if(dir!=forbidden && rc.canMove(dir)){
-                        System.out.println("IS THIS SHIT EVEN WORKING!!");
                         rc.move(dir);
                         previousDir = dir;
                         break;

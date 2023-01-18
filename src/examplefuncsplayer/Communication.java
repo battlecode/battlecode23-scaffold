@@ -87,7 +87,7 @@ class Communication {
             }
         }
         // Remember reading is cheaper than writing so we don't want to write without knowing if it's helpful
-        int idx = id + STARTING_ISLAND_IDX;
+        int idx = id + STARTING_ISLAND_IDX; /**SEAN: Perhaps subtract 1 so it starts at 0*/
         int oldIslandValue = rc.readSharedArray(idx);
         int updatedIslandValue = bitPackIslandInfo(rc, idx, closestIslandLoc);
         if (oldIslandValue != updatedIslandValue) {

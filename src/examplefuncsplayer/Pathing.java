@@ -36,7 +36,7 @@ public class Pathing {
                     break;
                 } else {
                     currentDirection = currentDirection.rotateLeft();
-                }
+                } /**Does this break with moving obsticles?? Also, lets try to impliment bug 1 or bug 2*/
             }
         }
     }
