@@ -8,13 +8,14 @@ public class LauncherStrategy {
      * Run a single turn for a Launcher.
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
-    static Direction previousDir = null; /**SEAN'S EDIT, INSTEAD OF MOVING TOWARD WELL, LAUNCHERS WILL MOVE PSEUDO-RANDOM BUT WILL NOT RETRACE THEIR MOST RECENT STEP*/
+    /**All the direction stuff, moved to pathing!*/
+//    static Direction previousDir = null; /**SEAN'S EDIT, INSTEAD OF MOVING TOWARD WELL, LAUNCHERS WILL MOVE PSEUDO-RANDOM BUT WILL NOT RETRACE THEIR MOST RECENT STEP*/
     static void runLauncher(RobotController rc) throws GameActionException {
         // Try to attack someone
         int radius = rc.getType().actionRadiusSquared;
         Team opponent = rc.getTeam().opponent();
         RobotInfo[] enemies = rc.senseNearbyRobots(radius, opponent);
-        int lowestHealth = 100;
+        int lowestHealth = 1000;
         int smallestDistance = 100;
         RobotInfo target = null;
         if (RobotPlayer.turnCount == 2) {
@@ -43,36 +44,55 @@ public class LauncherStrategy {
         if (target != null){
             if (rc.canAttack(target.getLocation()))
                 rc.attack(target.getLocation());
+            Pathing.moveTowards(rc, target.location);
         }
         else {
-            System.out.println(previousDir);
-            if(previousDir ==null) { /**SEANS EDIT: If you havent moved yet, this will choose randomly*/
-                Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
-                if (rc.canMove(dir)) {
-                    rc.move(dir);
-                    previousDir = dir;
+            RobotInfo[] allies = rc.senseNearbyRobots(9, rc.getTeam());
+            int lowestID = rc.getID();
+            MapLocation leaderPos = null;
+            for (RobotInfo ally : allies){
+                if (ally.getType() != RobotType.LAUNCHER)
+                    continue;
+                if (ally.getID() < lowestID){
+                    lowestID = ally.getID();
+                    leaderPos = ally.getLocation();
                 }
             }
-            else { /**If you have moved, prevents you from going backwards*/
-                int directionIndex;
-                for(directionIndex = 0; directionIndex<RobotPlayer.directions.length; directionIndex++) {
-                   if (RobotPlayer.directions[directionIndex] ==previousDir){
-                       break;
-                   }
-                }
-                System.out.println(directionIndex);
-                //int directionIndex = RobotPlayer.directions.indexOf(previousDir);//i dont think you can use the indexOf method since its not an arrayList
-                Direction forbidden = RobotPlayer.directions[(directionIndex+4)%8];
-                //Direction forbidden = previousDir;
-                while (true) {
-                    Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
-                    if(dir!=forbidden && rc.canMove(dir)){
-                        rc.move(dir);
-                        previousDir = dir;
-                        break;
-                    }
-                }
+            if (leaderPos != null){
+                Pathing.moveTowards(rc, leaderPos);
+                rc.setIndicatorString("Following " + lowestID);
             }
+            else{
+                Pathing.moveRandomNoBacktrack(rc);
+                rc.setIndicatorString("I'm the leader!");
+            }
+//            if(previousDir ==null) { /**SEANS EDIT: If you havent moved yet, this will choose randomly*/
+//                Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
+//                if (rc.canMove(dir)) {
+//                    rc.move(dir);
+//                    previousDir = dir;
+//                }
+//            }
+//            else { /**If you have moved, prevents you from going backwards*/
+//                int directionIndex;
+//                for(directionIndex = 0; directionIndex<RobotPlayer.directions.length; directionIndex++) {
+//                   if (RobotPlayer.directions[directionIndex] ==previousDir){
+//                       break;
+//                   }
+//                }
+//                System.out.println(directionIndex);
+//                //int directionIndex = RobotPlayer.directions.indexOf(previousDir);//i dont think you can use the indexOf method since its not an arrayList
+//                Direction forbidden = RobotPlayer.directions[(directionIndex+4)%8];
+//                //Direction forbidden = previousDir;
+//                while (true) {
+//                    Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
+//                    if(dir!=forbidden && rc.canMove(dir)){
+//                        rc.move(dir);
+//                        previousDir = dir;
+//                        break;
+//                    }
+//                }
+//            }
             /**WellInfo[] wells = rc.senseNearbyWells();
             if (wells.length > 0){
                 MapLocation wellLoc = wells[0].getMapLocation();

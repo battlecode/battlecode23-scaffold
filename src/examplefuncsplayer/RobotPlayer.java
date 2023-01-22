@@ -133,10 +133,22 @@ public strictfp class RobotPlayer {
             }
         } else {
             // Let's try to build a launcher.
-            rc.setIndicatorString("Trying to build a launcher");
-            if (rc.canBuildRobot(RobotType.LAUNCHER, newLoc)) {
-                rc.buildRobot(RobotType.LAUNCHER, newLoc);
+            if (rc.getActionCooldownTurns() != 0 || rc.getResourceAmount(ResourceType.MANA) < 5 * RobotType.LAUNCHER.buildCostMana) /**SEAN'S NOTE: This second condition is do we not have much mana compared to the amount it takes to build a launcher, can wiggle these parameters*/
+                return;
+            int attempts = 0;
+            int numPlaced = 0;
+            while (numPlaced != 5 && attempts != 30){
+                attempts++;
+                if (rc.canBuildRobot(RobotType.LAUNCHER, newLoc)) {
+                    rc.buildRobot(RobotType.LAUNCHER, newLoc);
+                    numPlaced++;
+                }
+                else{
+                    dir = directions[rng.nextInt(directions.length)];
+                    newLoc = rc.getLocation().add(dir);
+                }
             }
+            rc.setIndicatorString("Trying to build a launcher");
         }
         Communication.tryWriteMessages(rc);
 
@@ -150,7 +162,8 @@ public strictfp class RobotPlayer {
     static void moveTowards(RobotController rc, MapLocation loc) throws GameActionException{
         Direction dir = rc.getLocation().directionTo(loc);
         if(rc.canMove(dir)) rc.move(dir);
-        else moveRandom(rc);
+        //else moveRandom(rc);
+        /**SEAN: WHAT HAPPENS IF WE COMMENT THIS OUT?? WE WANT IT TO THROW A GAME ACTION EXCEPTION IN ORDER FOR PATHING TO WORK?**/
     }
 
 }
