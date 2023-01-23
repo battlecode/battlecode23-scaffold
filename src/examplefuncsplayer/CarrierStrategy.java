@@ -32,8 +32,9 @@ public class CarrierStrategy {
         if(wellLoc != null) {
             System.out.println(String.format("The Distance is: %d", distance));
             System.out.println(String.format("The resource count is: %d", optimalAmount));
-
-            if(rc.canCollectResource(wellLoc, -1)) rc.collectResource(wellLoc, optimalAmount);
+            if(rc.canCollectResource(wellLoc, optimalAmount)) {
+                rc.collectResource(wellLoc, optimalAmount);
+            }
         }
 
         //Transfer resource to headquarters

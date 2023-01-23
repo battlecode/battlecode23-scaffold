@@ -31,6 +31,9 @@ public strictfp class RobotPlayer {
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
     static final Random rng = new Random(6147);
+    static final int ad_standard = 100; //adamantium, mana, and elixir requirements to build anchors
+    static final int man_standard = 100;
+    static final int elix_accel = 300;
 
     /** Array containing all the possible movement directions. */
     static final Direction[] directions = {
@@ -43,7 +46,6 @@ public strictfp class RobotPlayer {
             Direction.WEST,
             Direction.NORTHWEST,
     };
-
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
      * It is like the main function for your robot. If this method returns, the robot dies!
@@ -120,10 +122,37 @@ public strictfp class RobotPlayer {
         } else if (turnCount == 2) {
             Communication.updateHeadquarterInfo(rc);
         }
-        if (rc.canBuildAnchor(Anchor.STANDARD) && rc.getResourceAmount(ResourceType.ADAMANTIUM) > 100) {
-            // If we can build an anchor do it!
-            rc.buildAnchor(Anchor.STANDARD);
-            rc.setIndicatorString("Building anchor! " + rc.getNumAnchors(Anchor.STANDARD));
+
+        /*
+        standard anchors - max health of 250, need 100kg of adamantium + 100kg of mana
+        accelerating anchors - need 300kg of elixir, can't stack
+
+        other things we can make with elixir - temporal destabilizers (attack square within 13 units) (200 kg of elixir)
+        anchor health changes every  turn: (%island occupied by placing team)-(%island occupied
+        by opponent)
+        standard anchors heal by 1, accelerating anchors heal by 2. allied robots don't get healed
+        when they lose control of an island
+
+        if don't control island and can place anchor, do it.
+        teams can place anchor on otp of island they already control, will override last anchor.
+        It'll be at full health, regardless of health of past anchor.
+        */
+        int[] near_islands = rc.senseNearbyIslands();
+        if (rc.canBuildAnchor(Anchor.ACCELERATING) && rc.getResourceAmount(ResourceType.ELIXIR) > elix_accel) {
+            // build accelerating anchor if team is controlling nearby island, still working
+            int r_index = rng.nextInt(near_islands.length);
+            if (near_islands.length >= 1 && rc.senseTeamOccupyingIsland(near_islands[r_index]).equals(rc.getTeam().opponent())) {
+                rc.setIndicatorString("Building Accelerating Anchor! " + rc.getNumAnchors(Anchor.ACCELERATING));
+                rc.buildAnchor(Anchor.ACCELERATING); //would only want accelerating anchor if we're losing
+            }
+        }
+        if (rc.canBuildAnchor(Anchor.STANDARD)) {
+            int num_anchors = 1;
+            while (rc.getResourceAmount(ResourceType.ADAMANTIUM) > ad_standard && rc.getResourceAmount(ResourceType.MANA) > man_standard && num_anchors <= 5) { //build up to 5 standard anchors
+                rc.setIndicatorString("Building Standard Anchor! " + rc.getNumAnchors(Anchor.STANDARD));
+                rc.buildAnchor(Anchor.STANDARD);
+                num_anchors++;
+            }
         }
         if (rng.nextInt(3)==0) { /**1/3 chance of building a carrier, else it will build 5 launchers*/
             // Let's try to build a carrier.
