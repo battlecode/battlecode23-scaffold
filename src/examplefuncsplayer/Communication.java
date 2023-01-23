@@ -101,7 +101,7 @@ class Communication {
     static void addCarierWithAnchor(RobotController rc) throws GameActionException{
         Message msg = new Message(CARRIER_WITH_ANCHOR_IDX, rc.getID(), RobotPlayer.turnCount);
         messagesQueue.add(msg);
-    }
+    } /**Should probably make a method to delete it after it no longer needs protection, we'll see how it goes*/
 
     static int bitPackIslandInfo(RobotController rc, int islandId, MapLocation closestLoc) {
         int islandInt = locationToInt(rc, closestLoc);

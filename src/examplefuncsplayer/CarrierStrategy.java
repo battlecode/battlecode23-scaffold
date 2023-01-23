@@ -27,12 +27,13 @@ public class CarrierStrategy {
         scanIslands(rc);
 
         //Collect from well if close and inventory not full
+        int distance = (int) Math.sqrt(rc.getLocation().distanceSquaredTo(wellLoc));
+        int optimalAmount = getOptimalResourceCount(distance, well.isUpgraded());
         if(wellLoc != null) {
-            int distance = (int) Math.sqrt(rc.getLocation().distanceSquaredTo(wellLoc));
             System.out.println(String.format("The Distance is: %d", distance));
-            int optimalAmount = getOptimalResourceCount(distance, well.isUpgraded());
             System.out.println(String.format("The resource count is: %d", optimalAmount));
-            if(rc.canCollectResource(wellLoc, optimalAmount)) rc.collectResource(wellLoc, optimalAmount);
+
+            if(rc.canCollectResource(wellLoc, -1)) rc.collectResource(wellLoc, optimalAmount);
         }
 
         //Transfer resource to headquarters
@@ -41,7 +42,8 @@ public class CarrierStrategy {
 
         if(rc.canTakeAnchor(hqLoc, Anchor.STANDARD)) {
             rc.takeAnchor(hqLoc, Anchor.STANDARD);
-            anchorMode = true;  /**Needs to put this in communication array so that it becomes the leader for a bunch of launchers, that way it can head toward the well and be protected*/
+            anchorMode = true;
+            Communication.addCarierWithAnchor(rc);/**Needs to put this in communication array so that it becomes the leader for a bunch of launchers, that way it can head toward the well and be protected*/
         }
 
         //no resources -> look for well
@@ -55,7 +57,7 @@ public class CarrierStrategy {
                     }
                 }
             }
-            else RobotPlayer.moveTowards(rc, islandLoc);
+            else Pathing.moveTowards(rc, islandLoc);
 
             if(rc.canPlaceAnchor() && rc.senseTeamOccupyingIsland(rc.senseIsland(rc.getLocation())) == Team.NEUTRAL) {
                 rc.placeAnchor();
@@ -67,11 +69,11 @@ public class CarrierStrategy {
             if(total == 0) {
                 //move towards well or search for well
                 if(wellLoc == null) RobotPlayer.moveRandom(rc); //COULD BE COOL TO KEEP A LOG OF THE PREVIOUS STEPS TO MAKE REPEATING STEPS STOP HAPPENING
-                else if(!rc.getLocation().isAdjacentTo(wellLoc)) RobotPlayer.moveTowards(rc, wellLoc);
+                else if(!rc.getLocation().isAdjacentTo(wellLoc)) Pathing.moveTowards(rc, wellLoc);
             }
-            if(total == GameConstants.CARRIER_CAPACITY) {
+            else if (total==optimalAmount){
                 //move towards HQ
-                RobotPlayer.moveTowards(rc, hqLoc);
+                Pathing.moveTowards(rc, hqLoc);
             }
         }
         Communication.tryWriteMessages(rc);
