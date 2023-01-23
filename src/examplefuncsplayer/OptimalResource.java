@@ -6,7 +6,7 @@ public class OptimalResource {
         int resourceGatheringRate = isUpgradedWell ? GameConstants.WELL_ACCELERATED_RATE : GameConstants.WELL_STANDARD_RATE;
         double bestRate = 0;
         int bestAmount = 1;
-        for (int m = 1; m < GameConstants.CARRIER_CAPACITY; m++){
+        for (int m = (int) GameConstants.CARRIER_CAPACITY/2; m < GameConstants.CARRIER_CAPACITY; m++){
             int numTurns = 0;
             //number of turns to get from HQ to well
             numTurns += numTurns(distance, getCarrierMovementCooldown(0), 1);
@@ -20,6 +20,9 @@ public class OptimalResource {
                 bestRate = curRate;
                 bestAmount = m;
             }
+            else {
+                break;
+            } /**Hopefully more efficient bitecode wise, will start from minimum 20 resources and stop once it no longer increases*/
         }
         return bestAmount; /**Binary Search Instead?*/
     }

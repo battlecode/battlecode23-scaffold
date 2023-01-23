@@ -2,10 +2,13 @@ package examplefuncsplayer;
 
 import battlecode.common.*;
 
+import static examplefuncsplayer.OptimalResource.getOptimalResourceCount;
+
 public class CarrierStrategy {
 
     static MapLocation hqLoc;
     static MapLocation wellLoc;
+    static WellInfo well;
     static MapLocation islandLoc;
 
     static boolean anchorMode = false;
@@ -24,7 +27,13 @@ public class CarrierStrategy {
         scanIslands(rc);
 
         //Collect from well if close and inventory not full
-        if(wellLoc != null && rc.canCollectResource(wellLoc, -1)) rc.collectResource(wellLoc, -1);
+        if(wellLoc != null) {
+            int distance = (int) Math.sqrt(rc.getLocation().distanceSquaredTo(wellLoc));
+            System.out.println(String.format("The Distance is: %d", distance));
+            int optimalAmount = getOptimalResourceCount(distance, well.isUpgraded());
+            System.out.println(String.format("The resource count is: %d", optimalAmount));
+            if(rc.canCollectResource(wellLoc, optimalAmount)) rc.collectResource(wellLoc, optimalAmount);
+        }
 
         //Transfer resource to headquarters
         depositResource(rc, ResourceType.ADAMANTIUM);
@@ -32,7 +41,7 @@ public class CarrierStrategy {
 
         if(rc.canTakeAnchor(hqLoc, Anchor.STANDARD)) {
             rc.takeAnchor(hqLoc, Anchor.STANDARD);
-            anchorMode = true;
+            anchorMode = true;  /**Needs to put this in communication array so that it becomes the leader for a bunch of launchers, that way it can head toward the well and be protected*/
         }
 
         //no resources -> look for well
@@ -96,9 +105,13 @@ public class CarrierStrategy {
         WellInfo[] wells = rc.senseNearbyWells();
         if(wells.length > 0) {
             wellLoc = wells[0].getMapLocation();
+            well = wells[0];
             for(int i = 1; i < wells.length; i++) {
                 if(rc.getLocation().distanceSquaredTo(wellLoc) > rc.getLocation().distanceSquaredTo(wells[i].getMapLocation())) { //*Note! getMapLocation is for wells, getLocation is for robots*//
-                    wellLoc = wells[i].getMapLocation(); /**IMPROVEMENT SEAN MADE: WILL CHOSE THE NEAREST WELL**/
+                    wellLoc = wells[i].getMapLocation();
+                    well = wells[i];
+                    /**IMPROVEMENT SEAN MADE: WILL CHOSE THE NEAREST WELL**/
+                    /**Also, updates well so we actually get a well info object*/
                 }
             }
         }

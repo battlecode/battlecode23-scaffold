@@ -24,7 +24,9 @@ class Communication {
 
     // Maybe you want to change this based on exact amounts which you can get on turn 1
     static final int STARTING_ISLAND_IDX = GameConstants.MAX_STARTING_HEADQUARTERS;
-    private static final int STARTING_ENEMY_IDX = GameConstants.MAX_NUMBER_ISLANDS + GameConstants.MAX_STARTING_HEADQUARTERS;
+    private static final int STARTING_ENEMY_IDX = GameConstants.MAX_NUMBER_ISLANDS + GameConstants.MAX_STARTING_HEADQUARTERS + 1; /**tryna add 1 to give a space for carriers with anchors*/
+
+    public static final int CARRIER_WITH_ANCHOR_IDX = GameConstants.MAX_NUMBER_ISLANDS + GameConstants.MAX_STARTING_HEADQUARTERS; /**lets try this*/
 
     private static final int TOTAL_BITS = 16;
     private static final int MAPLOC_BITS = 12;
@@ -94,6 +96,11 @@ class Communication {
             Message msg = new Message(idx, updatedIslandValue, RobotPlayer.turnCount);
             messagesQueue.add(msg);
         }
+    }
+
+    static void addCarierWithAnchor(RobotController rc) throws GameActionException{
+        Message msg = new Message(CARRIER_WITH_ANCHOR_IDX, rc.getID(), RobotPlayer.turnCount);
+        messagesQueue.add(msg);
     }
 
     static int bitPackIslandInfo(RobotController rc, int islandId, MapLocation closestLoc) {

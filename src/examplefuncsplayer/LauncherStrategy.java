@@ -11,17 +11,22 @@ public class LauncherStrategy {
     /**All the direction stuff, moved to pathing!*/
 //    static Direction previousDir = null; /**SEAN'S EDIT, INSTEAD OF MOVING TOWARD WELL, LAUNCHERS WILL MOVE PSEUDO-RANDOM BUT WILL NOT RETRACE THEIR MOST RECENT STEP*/
     static void runLauncher(RobotController rc) throws GameActionException {
+        int carrierWithAnchor = rc.readSharedArray(Communication.CARRIER_WITH_ANCHOR_IDX);
         // Try to attack someone
         int radius = rc.getType().actionRadiusSquared;
         Team opponent = rc.getTeam().opponent();
-        RobotInfo[] enemies = rc.senseNearbyRobots(radius, opponent);
+        RobotInfo[] enemies = rc.senseNearbyRobots(radius, opponent); /**Make use of the getClosestEnemy method from Communication*/
         int lowestHealth = 1000;
         int smallestDistance = 100;
         RobotInfo target = null;
         if (RobotPlayer.turnCount == 2) {
             Communication.updateHeadquarterInfo(rc);
         }
+
         Communication.clearObsoleteEnemies(rc);
+
+        RobotInfo[] allies = rc.senseNearbyRobots(9, rc.getTeam());
+
         if (enemies.length > 0) {
             for (RobotInfo enemy: enemies){
                 Communication.reportEnemy(rc, enemy.location);
@@ -40,14 +45,22 @@ public class LauncherStrategy {
                 }
             }
         }
+
         Communication.tryWriteMessages(rc);
+
         if (target != null){
             if (rc.canAttack(target.getLocation()))
                 rc.attack(target.getLocation());
             Pathing.moveTowards(rc, target.location);
         }
+        else if (carrierWithAnchor != 0) { /**SHOULD THIS BE NULL??????? IDK*/
+            for (RobotInfo ally : allies){
+                if(carrierWithAnchor == ally.getID()){
+                    Pathing.moveTowards(rc,ally.getLocation());
+                }
+            }
+        }
         else {
-            RobotInfo[] allies = rc.senseNearbyRobots(9, rc.getTeam());
             int lowestID = rc.getID();
             MapLocation leaderPos = null;
             for (RobotInfo ally : allies){

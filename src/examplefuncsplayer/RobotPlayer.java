@@ -125,7 +125,7 @@ public strictfp class RobotPlayer {
             rc.buildAnchor(Anchor.STANDARD);
             rc.setIndicatorString("Building anchor! " + rc.getNumAnchors(Anchor.STANDARD));
         }
-        if (rng.nextBoolean()) {
+        if (rng.nextInt(3)==0) { /**1/3 chance of building a carrier, else it will build 5 launchers*/
             // Let's try to build a carrier.
             rc.setIndicatorString("Trying to build a carrier");
             if (rc.canBuildRobot(RobotType.CARRIER, newLoc)) {
